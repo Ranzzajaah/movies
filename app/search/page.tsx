@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { search } from "@/lib/movieApi";
@@ -8,7 +9,8 @@ import MediaGrid from "@/components/MediaGrid";
 import { Loader2, SearchX } from "lucide-react";
 import { ApiResponse, ListResponse, MediaItem } from "@/types/api";
 
-export default function SearchPage() {
+// 1. Komponen Utama Pencarian
+function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
 
@@ -21,7 +23,7 @@ export default function SearchPage() {
   const results = data?.data?.items || [];
 
   return (
-    <main className="min-h-screen max-w-7xl mx-auto px-4 md:px-8 py-8">
+    <>
       <h1 className="text-2xl font-bold mb-6">
         Hasil Pencarian untuk: <span className="text-red-500">"{query}"</span>
       </h1>
@@ -48,6 +50,23 @@ export default function SearchPage() {
           <p>Tidak ditemukan hasil untuk "{query}".</p>
         </div>
       )}
+    </>
+  );
+}
+
+// 2. Export Page Wrapper dengan Suspense Boundary
+export default function SearchPage() {
+  return (
+    <main className="min-h-screen max-w-7xl mx-auto px-4 md:px-8 py-8">
+      <Suspense
+        fallback={
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-red-500" />
+          </div>
+        }
+      >
+        <SearchContent />
+      </Suspense>
     </main>
   );
 }
