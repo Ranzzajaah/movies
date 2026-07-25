@@ -3,23 +3,25 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDetail, getDetailRec } from "@/lib/movieApi";
 import MediaCard from "@/components/MediaCard";
+import MediaGrid from "@/components/MediaGrid";
 import { Star, Play, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { ApiResponse, ListResponse, MediaItem } from "@/types/api";
 
 export default function DetailPage() {
   const params = useParams();
   const subjectId = params.id as string;
 
-  const { data: detailData, isLoading } = useQuery({
+  const { data: detailData, isLoading } = useQuery<ApiResponse<MediaItem>>({
     queryKey: ["detail", subjectId],
-    queryFn: () => getDetail(subjectId),
+    queryFn: () => getDetail(subjectId) as Promise<ApiResponse<MediaItem>>,
     enabled: !!subjectId,
   });
 
-  const { data: recData } = useQuery({
+  const { data: recData } = useQuery<ApiResponse<ListResponse<MediaItem>>>({
     queryKey: ["recommendations", subjectId],
-    queryFn: () => getDetailRec({ subjectId }),
+    queryFn: () => getDetailRec({ subjectId }) as Promise<ApiResponse<ListResponse<MediaItem>>>,
     enabled: !!subjectId,
   });
 
@@ -31,12 +33,12 @@ export default function DetailPage() {
     );
   }
 
+  // Menggunakan fallback bertingkat & pengecekan aman
   const detail = detailData?.data;
   const recommendations = recData?.data?.items || [];
 
   return (
     <main className="min-h-screen pb-16">
-      {/* Hero Section Banner */}
       <div className="relative w-full h-[50vh] min-h-[350px] bg-slate-900 overflow-hidden">
         <img
           src={detail?.cover?.url || detail?.posterUrl || "/placeholder.jpg"}
@@ -76,7 +78,6 @@ export default function DetailPage() {
         </div>
       </div>
 
-      {/* Detail Content */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 mt-8 space-y-12">
         <section className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
           <h2 className="text-xl font-bold mb-3 text-slate-100">Sinopsis</h2>
@@ -85,24 +86,18 @@ export default function DetailPage() {
           </p>
         </section>
 
-        {/* Recommendations */}
         {recommendations.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold mb-6 border-l-4 border-red-500 pl-3">
-              Rekomendasi Serupa
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {recommendations.map((item: any) => (
-                <MediaCard
-                  key={item.id || item.subjectId}
-                  id={item.id || item.subjectId}
-                  title={item.title || item.name}
-                  coverUrl={item.cover?.url || item.posterUrl}
-                  rating={item.score}
-                />
-              ))}
-            </div>
-          </section>
+          <MediaGrid title="Rekomendasi Serupa">
+            {recommendations.map((item) => (
+              <MediaCard
+                key={item.id || item.subjectId}
+                id={item.id || item.subjectId || ""}
+                title={item.title || item.name || ""}
+                coverUrl={item.cover?.url || item.posterUrl || ""}
+                rating={item.score}
+              />
+            ))}
+          </MediaGrid>
         )}
       </div>
     </main>
