@@ -3,17 +3,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { getHome, getTrending } from "@/lib/movieApi";
 import MediaCard from "@/components/MediaCard";
+import MediaGrid from "@/components/MediaGrid";
+import MovieHero from "@/components/MovieHero";
 import { Loader2 } from "lucide-react";
+import { ApiResponse, ListResponse, MediaItem } from "@/types/api";
 
 export default function HomePage() {
-  const { data: homeData, isLoading: homeLoading } = useQuery({
+  const { data: homeData, isLoading: homeLoading } = useQuery<ApiResponse<ListResponse<MediaItem>>>({
     queryKey: ["homeFeed"],
-    queryFn: () => getHome(),
+    queryFn: () => getHome() as Promise<ApiResponse<ListResponse<MediaItem>>>,
   });
 
-  const { data: trendingData, isLoading: trendingLoading } = useQuery({
+  const { data: trendingData, isLoading: trendingLoading } = useQuery<ApiResponse<ListResponse<MediaItem>>>({
     queryKey: ["trendingFeed"],
-    queryFn: () => getTrending({ page: 1, perPage: 18 }),
+    queryFn: () => getTrending({ page: 1, perPage: 18 }) as Promise<ApiResponse<ListResponse<MediaItem>>>,
   });
 
   if (homeLoading || trendingLoading) {
@@ -25,25 +28,24 @@ export default function HomePage() {
   }
 
   const items = trendingData?.data?.items || homeData?.data?.items || [];
+  const heroMovie = items[0];
+  const gridItems = items.slice(1);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 md:px-8 py-8 max-w-7xl mx-auto">
-      <section className="mb-8">
-        <h2 className="text-2xl font-bold mb-6 border-l-4 border-red-500 pl-3">
-          Trending Now
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {items.map((item: any) => (
-            <MediaCard
-              key={item.id || item.subjectId}
-              id={item.id || item.subjectId}
-              title={item.title || item.name}
-              coverUrl={item.cover?.url || item.posterUrl}
-              rating={item.score}
-            />
-          ))}
-        </div>
-      </section>
+      {heroMovie && <MovieHero movie={heroMovie} />}
+
+      <MediaGrid title="Trending Sekarang">
+        {gridItems.map((item) => (
+          <MediaCard
+            key={item.id || item.subjectId}
+            id={item.id || item.subjectId || ""}
+            title={item.title || item.name || ""}
+            coverUrl={item.cover?.url || item.posterUrl || ""}
+            rating={item.score}
+          />
+        ))}
+      </MediaGrid>
     </main>
   );
 }
